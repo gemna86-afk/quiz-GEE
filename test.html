@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Géomatique M2 - Analyse Multicritère (10 min)</title>
+    <!-- Chargement de Tailwind CSS pour un style moderne et responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Configuration de la police Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* Gris très clair */
+        }
+        /* Styles pour les boutons d'options */
+        .option-button {
+            transition: all 0.2s;
+            min-height: 4rem;
+            /* Flex pour centrer le texte des options */
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+        .option-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: #f1f5f9; /* Slate-100 */
+        }
+        /* Styles pour les réponses correctes/incorrectes après la fin du quiz */
+        .correct {
+            background-color: #d1fae5; /* Vert 100 */
+            border-color: #34d399; /* Vert 400 */
+        }
+        .incorrect {
+            background-color: #fee2e2; /* Rouge 100 */
+            border-color: #f87171; /* Rouge 400 */
+        }
+        /* Style pour l'alerte/rationale */
+        .rationale-text {
+            border-left: 4px solid;
+            padding-left: 1rem;
+        }
+        /* Animation simple pour l'icône de chargement */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner {
+            border-top-color: #1e40af;
+            animation: spin 1s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <div id="app" class="w-full max-w-4xl bg-white shadow-xl rounded-xl p-6 md:p-10 border border-gray-100">
+        <!-- Le contenu sera rendu ici par JavaScript -->
+    </div>
+
+    <script>
+        // Le contenu du quiz est extrait et nettoyé du JSON de l'artefact précédent.
+        const quizData = [
+            {
+                question: "Quel est l’objectif principal de l’étape de standardisation ou de normalisation des facteurs dans le processus d'Analyse Multicritère (AMC)?",
+                options: [
+                    { text: "Déterminer l'importance relative de chaque critère grâce à la méthode AHP.", isCorrect: false, rationale: "L'importance relative des critères est déterminée lors de l'étape de pondération, souvent via des méthodes comme l'AHP, et non la normalisation." },
+                    { text: "Ramener les valeurs des critères à une échelle commune pour une comparaison équitable.", isCorrect: true, rationale: "La normalisation est essentielle pour rendre comparables des variables hétérogènes (mètres, degrés, pourcentage) en les exprimant sur un référentiel d'aptitude unique." },
+                    { text: "Vérifier la cohérence des jugements des experts à l'aide du Ratio de Cohérence (RC).", isCorrect: false, rationale: "Le Ratio de Cohérence est utilisé lors de la pondération (AHP) pour évaluer la fiabilité des comparaisons par paire, et non pendant la normalisation." },
+                    { text: "Combiner les cartes de facteurs et les poids pour générer la carte de décision finale.", isCorrect: false, rationale: "La combinaison des critères normalisés et pondérés est réalisée lors de l'étape d'agrégation, qui suit la normalisation." }
+                ]
+            },
+            {
+                question: "Dans le cadre du Processus Hiérarchique Analytique (AHP), que représente la méthode de comparaison par paire (pairwise comparison) développée par Saaty (1977)?",
+                options: [
+                    { text: "Une technique d’agrégation linéaire pondérée des critères.", isCorrect: false, rationale: "La comparaison par paire est une méthode de pondération pour établir les poids des critères, pas une méthode d'agrégation." },
+                    { text: "Une méthode pour réévaluer les valeurs brutes des facteurs en scores d'aptitude de 0 à 1.", isCorrect: false, rationale: "La réévaluation des valeurs brutes en scores d'aptitude est l'objectif de la normalisation (ou standardisation) des facteurs." },
+                    { text: "Une technique pour déterminer le poids relatif de chaque critère en les comparant deux à deux sur une échelle de 1 à 9.", isCorrect: true, rationale: "La méthode AHP utilise la comparaison par paire pour construire une matrice permettant de dériver le vecteur propre et les poids associés à chaque critère." },
+                    { text: "Un outil de validation pour créer des classes de vulnérabilité sur la carte finale.", isCorrect: false, rationale: "La validation et la classification des résultats se font après la phase de pondération et d'agrégation." }
+                ]
+            },
+            {
+                question: "Selon l'échelle fondamentale de Saaty, quelle note est attribuée lorsque le critère i\u2081 a 'beaucoup plus d’importance' que le critère i\u2082 ?",
+                options: [
+                    { text: "3", isCorrect: false, rationale: "La note 3 correspond à 'légèrement plus d’importance'." },
+                    { text: "5", isCorrect: false, rationale: "La note 5 correspond à 'plus d’importance'." },
+                    { text: "7", isCorrect: true, rationale: "La note 7 signifie que le critère i\u2081 a 'beaucoup plus d’importance' que i\u2082." },
+                    { text: "9", isCorrect: false, rationale: "La note 9 correspond à l'importance 'absolue' ou 'priorité sur'." }
+                ]
+            },
+            {
+                question: "Dans la vérification de la consistance des jugements AHP, quel est le seuil maximal acceptable pour le Ratio de Cohérence (RC)?",
+                options: [
+                    { text: "RC < 0,01", isCorrect: false, rationale: "Ce seuil est trop strict; le seuil de 0,01 est souvent synonyme de cohérence quasi parfaite." },
+                    { text: "RC < 0,10", isCorrect: true, rationale: "Selon Saaty, un RC inférieur à 0,10 indique une cohérence acceptable des comparaisons par paire, et le processus peut continuer." },
+                    { text: "RC < 0,50", isCorrect: false, rationale: "Un RC de 0,50 serait considéré comme une incohérence significative et nécessiterait une révision des jugements." },
+                    { text: "RC = 1,00", isCorrect: false, rationale: "Un RC égal à 1,00 signifierait une incohérence majeure, car il est recherché un RC proche de zéro." }
+                ]
+            },
+            {
+                question: "Quelle est la principale différence entre la standardisation des facteurs par 'Reclassification rigide' (Classification simple) et par 'Fonction d’Appartenance Floue' (Fuzzy Membership)?",
+                options: [
+                    { text: "La Reclassification rigide est utilisée pour les données raster, tandis que les Fonctions Floues sont réservées aux données vectorielles.", isCorrect: false, rationale: "Les deux méthodes peuvent être appliquées aux données raster, selon le modèle d'aptitude utilisé." },
+                    { text: "La Reclassification rigide gère l'incertitude et les zones de transition, alors que les Fonctions Floues imposent des classes binaires (aptitude 0 ou 1).", isCorrect: false, rationale: "C'est l'inverse : les fonctions floues intègrent l'incertitude et les transitions douces, tandis que la reclassification est rigide (valeurs discrètes)." },
+                    { text: "La Reclassification rigide attribue des valeurs discrètes (ex: 1, 2, 3) sans transition, alors que les Fonctions Floues attribuent un degré d’appartenance continu entre 0 et 1.", isCorrect: true, rationale: "La force des fonctions floues est de modéliser des transitions progressives, contrairement aux seuils nets de la reclassification simple." },
+                    { text: "La Reclassification rigide est utilisée pour la pondération, et les Fonctions Floues pour l'agrégation.", isCorrect: false, rationale: "Les deux sont des méthodes de normalisation des facteurs, pas des méthodes de pondération ou d'agrégation." }
+                ]
+            },
+            {
+                question: "Laquelle de ces échelles est couramment utilisée en AMC-SIG pour exprimer les scores normalisés sur une base d'aptitude continue, notamment avec des poids flous?",
+                options: [
+                    { text: "Échelle discrète de 1 à 9 (échelle de Saaty).", isCorrect: false, rationale: "L'échelle de 1 à 9 est l'échelle de Saaty utilisée pour la pondération (AHP), et non pour la normalisation des scores d'aptitude." },
+                    { text: "Échelle continue de 0 à 1.", isCorrect: true, rationale: "L'échelle continue de 0 à 1 est très courante pour représenter le degré d'appartenance (poids flous) ou les scores d'aptitude normalisés dans la plupart des logiciels SIG avancés." },
+                    { text: "Échelle de 0 à 1000 mètres.", isCorrect: false, rationale: "Cette échelle est une unité de mesure brute (distance), qui doit être normalisée pour être utilisable en AMC." },
+                    { text: "Échelle de 0 à 255.", isCorrect: false, rationale: "L'échelle de 0 à 255 est un codage sur 8 bits, qui peut être utilisé pour la classification, mais l'échelle de 0 à 1 est plus typique pour la pondération floue continue." }
+                ]
+            },
+            {
+                question: "Pourquoi l'approche AMC-SIG est-elle considérée comme essentielle dans la résolution des problèmes de décision spatiale complexes?",
+                options: [
+                    { text: "Parce qu'elle permet de remplacer complètement le jugement humain par un algorithme purement objectif.", isCorrect: false, rationale: "L'AMC vise à 'aider' à la prise de décision en intégrant le jugement humain (préférences, pondérations) dans un cadre structuré, sans le remplacer totalement." },
+                    { text: "Parce qu'elle permet de simplifier les problèmes de décision en n'utilisant qu'un seul critère à la fois.", isCorrect: false, rationale: "L'AMC est par définition conçue pour gérer la multiplicité et la diversité des critères (critères multiples) qui sont souvent conflictuels." },
+                    { text: "Parce qu'elle est capable de gérer une multiplicité de critères variés (quantitatifs ou qualitatifs) et les objectifs divergents de multiples acteurs.", isCorrect: true, rationale: "L'AMC permet de structurer un problème complexe en intégrant divers critères et en cherchant un compromis satisfaisant entre les préférences des différentes parties prenantes." },
+                    { text: "Parce qu'elle est uniquement basée sur la reclassification des données pédologiques et hydrologiques.", isCorrect: false, rationale: "L'AMC-SIG utilise un large éventail de critères géographiques et socio-économiques; elle n'est pas limitée à ces seules disciplines." }
+                ]
+            },
+            {
+                question: "Lequel des éléments suivants est défini comme 'l'importance relative attribuée à chaque critère dans le modèle, dont le total doit généralement être égal à 100% ou 1'?",
+                options: [
+                    { text: "Critère", isCorrect: false, rationale: "Un critère est un facteur pris en compte dans l'analyse (ex: pente, coût), pas son niveau d'influence." },
+                    { text: "Degré de vulnérabilité", isCorrect: false, rationale: "Le degré de vulnérabilité est le niveau de sensibilité ou de risque représenté par une valeur d'un critère (ex: Forêt = faible vulnérabilité), pas son poids général dans l'analyse." },
+                    { text: "Classe de vulnérabilité", isCorrect: false, rationale: "Les classes de vulnérabilité sont les catégories de la carte finale (ex: faible, moyen, fort), pas l'importance relative d'un facteur." },
+                    { text: "Poids", isCorrect: true, rationale: "Le poids est la valeur numérique (coefficient de pondération) qui exprime l'importance relative d'un facteur dans l'équation d'agrégation, où la somme des poids vaut 1." }
+                ]
+            },
+            {
+                question: "Dans quel contexte une 'Fonction d’Appartenance Floue en forme de J' est-elle la plus appropriée pour la standardisation d'un facteur?",
+                options: [
+                    { text: "Quand l'influence du facteur augmente proportionnellement à sa valeur (Linéaire).", isCorrect: false, rationale: "Ceci décrit une fonction d'appartenance de type linéaire (croissante) ou sigmoïde (forme en 'S' avec seuil progressif)." },
+                    { text: "Quand l'influence du facteur est la plus forte dès les premières valeurs, puis son effet sature rapidement (J-Shape).", isCorrect: true, rationale: "La fonction en 'J' est adaptée aux facteurs dont l'effet est très important et immédiat (ex: proximité immédiate d'un élément) et qui saturent ensuite." },
+                    { text: "Quand le facteur est très favorable au milieu de l'intervalle de valeurs, et défavorable aux deux extrémités.", isCorrect: false, rationale: "Ceci décrirait plutôt une fonction d'appartenance en forme de cloche (gaussienne) ou triangulaire ('U' inversé)." },
+                    { text: "Quand le facteur devient significatif à partir d’un seuil, avec une transition douce ('S' shape).", isCorrect: false, rationale: "Ceci correspond à une fonction d'appartenance de type sigmoïde ou en 'S'." }
+                ]
+            },
+            {
+                question: "Selon les étapes de l'AMC-SIG, quelle opération intervient immédiatement après la Pondération des critères (AHP, Ranking, etc.)?",
+                options: [
+                    { text: "Fixer l'objectif et définir le problème.", isCorrect: false, rationale: "C'est la première étape du processus AMC, bien avant la pondération." },
+                    { text: "Normaliser les scores des facteurs/critères.", isCorrect: false, rationale: "La normalisation doit être faite avant la pondération pour s'assurer que les critères à pondérer sont sur une même échelle." },
+                    { text: "Valider/vérifier le résultat final.", isCorrect: false, rationale: "La validation est la toute dernière étape de l'analyse, après l'agrégation." },
+                    { text: "Agréger les critères (Combinaison Pondérée).", isCorrect: true, rationale: "Une fois les facteurs normalisés et les poids des critères déterminés, l'étape suivante est l'agrégation pour calculer l'aptitude finale (Combinaison Pondérée)." }
+                ]
+            }
+        ];
+
+        // --- État Global de l'Application ---
+        let state = {
+            quizState: 'start', // 'start', 'active', 'finished'
+            currentQuestionIndex: 0,
+            score: 0,
+            answers: new Array(quizData.length).fill(null), // Stocke l'index de l'option sélectionnée (ou null)
+            timeLeft: 10 * 60, // 10 minutes en secondes
+            timerInterval: null
+        };
+
+        const appElement = document.getElementById('app');
+        const MAX_TIME = 10 * 60; // 10 minutes
+
+        // --- Fonctions de Gestion du Temps ---
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+
+            state.timerInterval = setInterval(() => {
+                state.timeLeft--;
+                render();
+
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timerInterval);
+                    endQuiz(true); // Termine à cause du temps écoulé
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        // --- Fonctions de Gestion du Quiz ---
+
+        function startQuiz() {
+            state.quizState = 'active';
+            state.currentQuestionIndex = 0;
+            state.score = 0;
+            state.answers = new Array(quizData.length).fill(null);
+            state.timeLeft = MAX_TIME;
+            startTimer();
+            render();
+        }
+
+        function selectAnswer(questionIndex, optionIndex) {
+            if (state.quizState !== 'active' || state.answers[questionIndex] !== null) return;
+
+            state.answers[questionIndex] = optionIndex;
+            
+            // Calculer le score immédiatement pour la barre de progression
+            updateScore();
+            
+            // Ajouter une classe pour l'effet visuel de sélection (optionnel)
+            const button = appElement.querySelector(`[onclick="selectAnswer(${questionIndex}, ${optionIndex})"]`);
+            if (button) {
+                button.classList.add('transform', 'scale-[1.01]', 'ring-4', 'ring-blue-300');
+            }
+
+            // Passer à la question suivante après un court délai pour l'effet visuel
+            setTimeout(() => {
+                nextQuestion();
+            }, 300); // Délai augmenté pour un meilleur feedback
+            
+            render();
+        }
+        
+        function updateScore() {
+            let currentScore = 0;
+            state.answers.forEach((selectedOptionIndex, qIndex) => {
+                if (selectedOptionIndex !== null) {
+                    const question = quizData[qIndex];
+                    if (question.options[selectedOptionIndex].isCorrect) {
+                        currentScore++;
+                    }
+                }
+            });
+            state.score = currentScore;
+        }
+
+
+        function nextQuestion() {
+            if (state.currentQuestionIndex < quizData.length - 1) {
+                state.currentQuestionIndex++;
+                render();
+            } else {
+                endQuiz(false); // Termine normalement
+            }
+        }
+        
+        // Expose showQuestion globally for navigation in results (though not used in this iteration)
+        window.showQuestion = function(index) {
+            state.currentQuestionIndex = index;
+            render();
+        }
+
+        function endQuiz(timeUp) {
+            stopTimer();
+            state.quizState = 'finished';
+            // Calcul final du score basé sur les réponses stockées
+            updateScore();
+            render();
+            
+            // Afficher un message de fin de temps
+            if (timeUp) {
+                // Utiliser un modal personnalisé au lieu d'alert()
+                const modal = document.getElementById('time-up-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    // Cacher le modal après 5 secondes
+                    setTimeout(() => modal.classList.add('hidden'), 5000); 
+                }
+            }
+        }
+
+        // Exposer les fonctions importantes au scope global pour les `onclick`
+        window.startQuiz = startQuiz;
+        window.selectAnswer = selectAnswer;
+        window.endQuiz = endQuiz;
+
+
+        // --- Fonctions de Rendu des Écrans ---
+
+        function renderStartScreen() {
+            appElement.innerHTML = `
+                <div class="text-center">
+                    <h1 class="text-3xl font-extrabold text-blue-800 mb-4">Quiz Géomatique Master 2</h1>
+                    <p class="text-xl text-gray-600 mb-6">Analyse Multicritère et SIG (AMC-SIG)</p>
+                    
+                    <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl shadow-md inline-block max-w-lg mx-auto">
+                        <p class="text-gray-700 text-lg mb-4">Ce quiz contient ${quizData.length} questions et teste vos connaissances sur les concepts fondamentaux de l'AMC et de l'AHP.</p>
+                        <p class="text-2xl font-bold text-red-600 mb-6 flex items-center justify-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Temps Limite : 10 minutes
+                        </p>
+                        <button onclick="startQuiz()" class="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 transform hover:scale-[1.02]">
+                            Commencer le Quiz
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderActiveQuiz() {
+            const qIndex = state.currentQuestionIndex;
+            const question = quizData[qIndex];
+            const totalQuestions = quizData.length;
+            // La progression doit prendre en compte la question en cours + les questions répondues si l'on est à la fin.
+            const answeredCount = state.answers.filter(a => a !== null).length;
+            const progress = (answeredCount / totalQuestions) * 100;
+            const selectedOption = state.answers[qIndex];
+
+            // Rendu de la minuterie
+            const timeFormatted = formatTime(state.timeLeft);
+            const timerColor = state.timeLeft <= 60 ? 'bg-red-500' : 'bg-blue-600';
+            const timerText = state.timeLeft <= 60 ? 'text-white font-bold' : 'text-white';
+
+            // Contenu HTML principal du quiz
+            appElement.innerHTML = `
+                <!-- Modale Alerte Temps Écoulé -->
+                <div id="time-up-modal" class="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center hidden backdrop-blur-sm transition-opacity duration-300">
+                    <div class="bg-red-600 text-white p-10 rounded-xl shadow-2xl text-center transform scale-105 animate-pulse border-4 border-white">
+                        <p class="text-3xl font-extrabold mb-2">🔴 TEMPS ÉCOULÉ !</p>
+                        <p class="text-lg">Le quiz est terminé. Affichage des résultats...</p>
+                    </div>
+                </div>
+
+                <!-- En-tête du Quiz (Minuteur & Progression) -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 p-4 border-b-4 border-blue-500 bg-blue-50 rounded-lg shadow-inner">
+                    <div class="order-2 md:order-1 w-full md:w-auto text-center md:text-left">
+                         <p class="text-xl font-semibold text-gray-700 mb-2">Question ${qIndex + 1} / ${totalQuestions}</p>
+                         <div class="w-full bg-gray-300 rounded-full h-3">
+                             <div class="bg-blue-500 h-3 rounded-full transition-all duration-700" style="width: ${progress}%;"></div>
+                         </div>
+                         <p class="text-sm text-gray-500 mt-1">Progression des réponses</p>
+                    </div>
+                    
+                    <div class="order-1 md:order-2 flex items-center space-x-2 mb-4 md:mb-0">
+                        <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-2xl ${timerText} px-4 py-1 rounded-xl ${timerColor} shadow-lg transition duration-500 min-w-[5rem] text-center">${timeFormatted}</span>
+                    </div>
+                </div>
+
+                <!-- Corps de la Question -->
+                <div class="mt-8">
+                    <p class="text-2xl font-bold text-gray-800 mb-6 p-3 bg-gray-50 rounded-lg shadow-sm">${question.question}</p>
+                    <div class="space-y-4">
+                        ${question.options.map((option, oIndex) => {
+                            const isSelected = selectedOption === oIndex;
+                            const buttonClass = isSelected 
+                                ? 'bg-blue-200 border-blue-600 shadow-xl ring-4 ring-blue-300 text-blue-800' 
+                                : 'bg-white border-gray-300 hover:bg-gray-100';
+                            
+                            return `
+                                <button
+                                    onclick="selectAnswer(${qIndex}, ${oIndex})"
+                                    class="option-button w-full text-left p-4 rounded-xl border-4 shadow-md ${buttonClass}
+                                        text-gray-700 disabled:opacity-80 disabled:cursor-not-allowed"
+                                    ${selectedOption !== null ? 'disabled' : ''}
+                                >
+                                    <span class="font-extrabold mr-3 text-lg">${String.fromCharCode(65 + oIndex)}.</span> ${option.text}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <!-- Bas de page -->
+                <div class="mt-8 pt-4 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+                    <p class="text-sm text-gray-500">Choisissez une seule option. Le passage à la question suivante est automatique.</p>
+                    <button onclick="endQuiz(false)" class="py-2 px-6 bg-red-600 text-white font-semibold rounded-lg shadow-lg hover:bg-red-700 transition duration-300 transform hover:scale-[1.02]">
+                        Terminer le Quiz et Voir les Résultats
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderResultsScreen() {
+            const totalQuestions = quizData.length;
+            const percentage = ((state.score / totalQuestions) * 100).toFixed(1);
+            const gradeText = state.score >= Math.ceil(totalQuestions * 0.7) ? 'Félicitations !' : 'À revoir...';
+            const gradeColor = state.score >= Math.ceil(totalQuestions * 0.7) ? 'text-green-600' : 'text-red-600';
+            const timeTaken = MAX_TIME - state.timeLeft;
+            const timeTakenFormatted = formatTime(timeTaken);
+
+            // Structure du résumé
+            let resultsHTML = `
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-extrabold text-blue-800 mb-2">Résultats du Quiz</h1>
+                    <p class="text-xl text-gray-600 mb-6">${gradeText}</p>
+                    
+                    <!-- Cartes de Résultat - Rendu Responsive -->
+                    <div class="flex flex-wrap justify-center gap-4 bg-blue-50 rounded-xl p-6 shadow-xl border border-blue-200">
+                        <!-- Carte 1: Score -->
+                        <div class="w-full sm:w-auto p-4 bg-white rounded-lg shadow-md flex flex-col items-center">
+                            <p class="text-5xl font-bold ${gradeColor}">${state.score}/${totalQuestions}</p>
+                            <p class="text-sm text-gray-500 mt-1">Bonnes Réponses</p>
+                        </div>
+                        <!-- Carte 2: Pourcentage -->
+                        <div class="w-full sm:w-auto p-4 bg-white rounded-lg shadow-md flex flex-col items-center">
+                            <p class="text-5xl font-bold text-gray-800">${percentage}%</p>
+                            <p class="text-sm text-gray-500 mt-1">Pourcentage</p>
+                        </div>
+                        <!-- Carte 3: Temps -->
+                        <div class="w-full sm:w-auto p-4 bg-white rounded-lg shadow-md flex flex-col items-center">
+                            <p class="text-5xl font-bold text-gray-800">${timeTakenFormatted}</p>
+                            <p class="text-sm text-gray-500 mt-1">Temps Utilisé</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-extrabold text-gray-800 border-b-2 border-gray-300 pb-2 mb-6">Correction Détaillée</h2>
+                <div class="space-y-8">
+            `;
+
+            // Affichage détaillé de chaque question
+            quizData.forEach((question, qIndex) => {
+                const selectedOptionIndex = state.answers[qIndex];
+                // Considérer la question comme correcte même si la réponse est null mais l'index correct est null (ce qui ne devrait pas arriver dans ce quiz)
+                const isCorrect = selectedOptionIndex !== null && question.options[selectedOptionIndex].isCorrect;
+                const cardColor = isCorrect ? 'border-green-600' : 'border-red-600';
+                const cardBg = isCorrect ? 'bg-green-50' : 'bg-red-50';
+                const icon = isCorrect 
+                    ? `<svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`
+                    : `<svg class="w-6 h-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+
+                resultsHTML += `
+                    <div class="p-6 border-4 rounded-xl ${cardColor} ${cardBg} shadow-lg">
+                        <div class="flex items-start mb-4">
+                            ${icon}
+                            <p class="text-lg font-bold text-gray-800">Question ${qIndex + 1} : ${question.question}</p>
+                        </div>
+                        
+                        <div class="ml-4 space-y-3">
+                            ${question.options.map((option, oIndex) => {
+                                let optionClass = 'p-3 rounded-lg border';
+                                let statusIcon = '';
+                                
+                                if (option.isCorrect) {
+                                    optionClass += ' correct font-bold border-green-500 bg-green-200 text-green-900 shadow-inner'; // Toujours mettre en évidence la bonne réponse
+                                    statusIcon = `<svg class="w-5 h-5 ml-auto text-green-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`;
+                                } else if (oIndex === selectedOptionIndex) {
+                                    optionClass += ' incorrect font-semibold border-red-500 bg-red-200 text-red-900 shadow-inner'; // Réponse du candidat (si incorrecte)
+                                    statusIcon = `<svg class="w-5 h-5 ml-auto text-red-700" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
+                                } else {
+                                    optionClass += ' text-gray-600 border-gray-200 bg-white';
+                                }
+                                return `<div class="${optionClass} flex items-center">
+                                            <span class="font-extrabold mr-3">${String.fromCharCode(65 + oIndex)}.</span> ${option.text}
+                                            ${statusIcon}
+                                        </div>`;
+                            }).join('')}
+                        </div>
+                        
+                        <!-- Rationale -->
+                        <div class="mt-5 p-4 rationale-text border-green-600 bg-green-100 rounded-lg shadow-md">
+                            <p class="font-extrabold text-green-900 text-lg mb-1">Explication :</p>
+                            <p class="text-gray-700">${question.options.find(opt => opt.isCorrect).rationale}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsHTML += `
+                </div>
+                <!-- Bouton de Recommencer -->
+                <div class="mt-10 pt-4 border-t border-gray-200 flex justify-center">
+                    <button onclick="startQuiz()" class="py-3 px-8 bg-blue-600 text-white font-semibold rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 transform hover:scale-[1.02]">
+                        Recommencer le Quiz
+                    </button>
+                </div>
+            `;
+            
+            appElement.innerHTML = resultsHTML;
+        }
+
+        function render() {
+            switch (state.quizState) {
+                case 'start':
+                    renderStartScreen();
+                    break;
+                case 'active':
+                    renderActiveQuiz();
+                    break;
+                case 'finished':
+                    renderResultsScreen();
+                    break;
+            }
+        }
+
+        // Initialisation - Démarrer le rendu au chargement complet de la page
+        document.addEventListener('DOMContentLoaded', render);
+    </script>
+</body>
+</html>
