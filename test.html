@@ -153,6 +153,11 @@
             }
         ];
 
+        // --- AJOUT : Email du professeur ---
+        // !!! IMPORTANT : Modifiez cette adresse e-mail par la vôtre
+        const INSTRUCTOR_EMAIL = 'votre.email@exemple.com'; 
+        // ---------------------------------
+
         // --- État Global de l'Application ---
         let state = {
             quizState: 'start', // 'start', 'active', 'finished'
@@ -160,7 +165,8 @@
             score: 0,
             answers: new Array(quizData.length).fill(null), // Stocke l'index de l'option sélectionnée (ou null)
             timeLeft: 10 * 60, // 10 minutes en secondes
-            timerInterval: null
+            timerInterval: null,
+            participantName: '' // AJOUT : Stocke le nom du participant
         };
 
         const appElement = document.getElementById('app');
@@ -198,6 +204,21 @@
         // --- Fonctions de Gestion du Quiz ---
 
         function startQuiz() {
+            // AJOUT : Validation du nom
+            const nameInput = document.getElementById('participantNameInput');
+            const errorEl = document.getElementById('nameError');
+            const name = nameInput.value.trim();
+
+            if (name === '') {
+                errorEl.textContent = 'Veuillez entrer votre nom pour commencer.';
+                errorEl.classList.remove('hidden');
+                nameInput.focus();
+                return;
+            }
+            // Fin AJOUT
+            
+            errorEl.classList.add('hidden'); // Cacher l'erreur si c'est bon
+            state.participantName = name; // Sauvegarder le nom
             state.quizState = 'active';
             state.currentQuestionIndex = 0;
             state.score = 0;
@@ -229,29 +250,6 @@
             render();
         }
         
-        function updateScore() {
-            let currentScore = 0;
-            state.answers.forEach((selectedOptionIndex, qIndex) => {
-                if (selectedOptionIndex !== null) {
-                    const question = quizData[qIndex];
-                    if (question.options[selectedOptionIndex].isCorrect) {
-                        currentScore++;
-                    }
-                }
-            });
-            state.score = currentScore;
-        }
-
-
-        function nextQuestion() {
-            if (state.currentQuestionIndex < quizData.length - 1) {
-                state.currentQuestionIndex++;
-                render();
-            } else {
-                endQuiz(false); // Termine normalement
-            }
-        }
-        
         // Expose showQuestion globally for navigation in results (though not used in this iteration)
         window.showQuestion = function(index) {
             state.currentQuestionIndex = index;
@@ -277,10 +275,24 @@
             }
         }
 
+        // AJOUT : Nouvelle fonction pour réinitialiser le quiz
+        function resetToStart() {
+            stopTimer();
+            state.quizState = 'start';
+            state.currentQuestionIndex = 0;
+            state.score = 0;
+            state.answers = new Array(quizData.length).fill(null);
+            state.timeLeft = MAX_TIME;
+            state.timerInterval = null;
+            state.participantName = '';
+            render();
+        }
+
         // Exposer les fonctions importantes au scope global pour les `onclick`
         window.startQuiz = startQuiz;
         window.selectAnswer = selectAnswer;
         window.endQuiz = endQuiz;
+        window.resetToStart = resetToStart; // AJOUT
 
 
         // --- Fonctions de Rendu des Écrans ---
@@ -293,6 +305,15 @@
                     
                     <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl shadow-md inline-block max-w-lg mx-auto">
                         <p class="text-gray-700 text-lg mb-4">Ce quiz contient ${quizData.length} questions et teste vos connaissances sur les concepts fondamentaux de l'AMC et de l'AHP.</p>
+                        
+                        <!-- AJOUT : Champ pour le nom -->
+                        <div class="mb-4 text-left">
+                            <label for="participantNameInput" class="block text-lg font-semibold text-gray-700 mb-2">Votre Nom Complet :</label>
+                            <input type="text" id="participantNameInput" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500" placeholder="Ex: Jean Dupont" value="${state.participantName}">
+                            <p id="nameError" class="text-red-500 text-sm mt-1 hidden"></p>
+                        </div>
+                        <!-- Fin AJOUT -->
+
                         <p class="text-2xl font-bold text-red-600 mb-6 flex items-center justify-center">
                             <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Temps Limite : 10 minutes
@@ -387,6 +408,18 @@
             const timeTaken = MAX_TIME - state.timeLeft;
             const timeTakenFormatted = formatTime(timeTaken);
 
+            // AJOUT : Logique pour le lien mailto
+            const subject = `Résultats Quiz AMC - ${state.participantName}`;
+            const body = `Bonjour,
+\nVoici mes résultats pour le Quiz Géomatique AMC :
+\nNom : ${state.participantName}
+Score : ${state.score} / ${totalQuestions}
+Pourcentage : ${percentage}%
+Temps utilisé : ${timeTakenFormatted}
+\nMerci.`;
+            const mailtoLink = `mailto:${INSTRUCTOR_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            // Fin AJOUT
+
             // Structure du résumé
             let resultsHTML = `
                 <div class="text-center mb-8">
@@ -467,9 +500,23 @@
 
             resultsHTML += `
                 </div>
-                <!-- Bouton de Recommencer -->
-                <div class="mt-10 pt-4 border-t border-gray-200 flex justify-center">
-                    <button onclick="startQuiz()" class="py-3 px-8 bg-blue-600 text-white font-semibold rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 transform hover:scale-[1.02]">
+                
+                <!-- AJOUT : Section d'envoi des résultats -->
+                <div class="mt-10 pt-6 border-t border-gray-300 bg-gray-50 p-6 rounded-lg shadow-inner text-center">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Envoyer vos résultats</h3>
+                    <p class="text-gray-600 mb-5">Cliquez sur le bouton ci-dessous pour envoyer vos résultats par e-mail à votre professeur.</p>
+                    <a href="${mailtoLink}" 
+                       target="_blank" 
+                       class="inline-block py-3 px-8 bg-green-600 text-white font-semibold rounded-lg shadow-xl hover:bg-green-700 transition duration-300 transform hover:scale-[1.02]">
+                        <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+                        Envoyer mes résultats
+                    </a>
+                </div>
+                <!-- Fin AJOUT -->
+
+                <!-- Bouton de Recommencer (Modifié) -->
+                <div class="mt-6 pt-4 flex justify-center">
+                    <button onclick="resetToStart()" class="py-3 px-8 bg-blue-600 text-white font-semibold rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 transform hover:scale-[1.02]">
                         Recommencer le Quiz
                     </button>
                 </div>
@@ -497,3 +544,5 @@
     </script>
 </body>
 </html>
+
+
