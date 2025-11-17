@@ -13,6 +13,30 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb; /* Arrière-plan clair */
         }
+        /* Style de base pour les boutons de réponse */
+        .option-button {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        /* Style lorsque la réponse est sélectionnée */
+        .selected {
+            border-color: #4f46e5; /* indigo-600 */
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #4338ca; /* indigo-700 */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        /* Style pour la réponse correcte */
+        .correct {
+            border-color: #10b981; /* vert-500 */
+            background-color: #d1fae5; /* vert-100 */
+            color: #065f46; /* vert-800 */
+        }
+        /* Style pour la réponse incorrecte */
+        .incorrect {
+            border-color: #f87171; /* rouge-400 */
+            background-color: #fee2e2; /* rouge-100 */
+            color: #991b1b; /* rouge-800 */
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 sm:p-8 flex items-center justify-center">
@@ -31,11 +55,10 @@
         <!-- Carte du Quiz -->
         <div id="quiz-card" class="bg-white rounded-3xl shadow-xl overflow-hidden p-6 sm:p-10 border border-gray-100">
 
-            <!-- Introduction et statistiques (zone future pour le contenu du quiz) -->
             <div class="flex flex-col lg:flex-row gap-8">
                 
                 <!-- Section Information/Statistiques -->
-                <div class="lg:w-1/3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 shadow-inner">
+                <div class="lg:w-1/3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 shadow-inner h-fit">
                     <h2 class="text-2xl font-semibold text-indigo-600 mb-4 flex items-center">
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Statistiques de l'Analyse
@@ -43,51 +66,57 @@
                     <ul class="space-y-3 text-gray-700">
                         <li class="flex justify-between items-center text-sm font-medium">
                             <span>Questions Terminées:</span>
-                            <span class="text-indigo-600 font-bold">0/7</span>
+                            <span id="questions-completed" class="text-indigo-600 font-bold">0/7</span>
                         </li>
                         <li class="flex justify-between items-center text-sm font-medium">
                             <span>Score Actuel:</span>
-                            <span class="text-green-600 font-bold">0%</span>
+                            <span id="score-percentage" class="text-green-600 font-bold">0%</span>
                         </li>
                         <li class="flex justify-between items-center text-sm font-medium">
                             <span>Domaine Actuel:</span>
-                            <span class="text-red-600 font-bold">Temporel</span>
+                            <span id="current-domain" class="text-red-600 font-bold">Temporel</span>
                         </li>
                     </ul>
                 </div>
 
                 <!-- Section Question/Contenu -->
-                <div class="lg:w-2/3">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <div id="quiz-content" class="lg:w-2/3">
+                    
+                    <!-- Contenu du Quiz (sera remplacé par JS) -->
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4" id="section-title">
                         Bienvenue dans le Quiz de Fourier
                     </h2>
-                    <p class="text-gray-600 mb-6">
-                        Ce quiz couvre les concepts fondamentaux de la Transformation et des Séries de Fourier, de leurs origines physiques à leurs applications modernes en imagerie et en traitement du signal.
+                    <p class="text-gray-600 mb-6" id="section-description">
+                        Ce quiz couvre les concepts fondamentaux de la Transformation et des Séries de Fourier, de leurs origines physiques à leurs applications modernes. Cliquez sur "Démarrer le Quiz" pour commencer.
                     </p>
 
-                    <!-- Zone pour la question 1 (simulation d'une question) -->
-                    <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                        <p class="text-lg font-semibold text-gray-800 mb-3">
-                            Question 1: Quel phénomène physique a initialement amené Fourier à soupçonner le rôle des fonctions trigonométriques ?
+                    <!-- Zone pour la question -->
+                    <div id="question-area" class="bg-gray-50 p-5 rounded-xl border border-gray-200 hidden">
+                        <p class="text-lg font-semibold text-gray-800 mb-3" id="question-text">
+                            <!-- Texte de la question injecté ici -->
                         </p>
-                        <!-- Simulation d'options de réponse -->
-                        <div class="space-y-3">
-                            <button class="w-full text-left p-3 border-2 border-indigo-300 bg-indigo-100 text-indigo-800 rounded-lg hover:bg-indigo-200 transition duration-150 shadow-sm font-medium">
-                                La propagation de la chaleur sur des corps solides
-                            </button>
-                            <button class="w-full text-left p-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150 shadow-sm font-medium">
-                                L'analyse des ondes sonores
-                            </button>
-                            <button class="w-full text-left p-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150 shadow-sm font-medium">
-                                La trajectoire des planètes
-                            </button>
+                        <!-- Options de réponse injectées ici -->
+                        <div class="space-y-3" id="options-container">
+                            <!-- Les boutons seront injectés ici par JavaScript -->
                         </div>
+                        
+                        <!-- Zone de feedback pour l'utilisateur après la validation -->
+                        <div id="feedback-message-area" class="mt-4 p-4 rounded-xl font-semibold text-lg hidden border border-gray-300">
+                            <!-- Message de feedback injecté ici -->
+                        </div>
+                    </div>
+
+                    <!-- Zone pour le Résultat Final -->
+                    <div id="results-area" class="hidden text-center p-8 bg-green-50 rounded-xl border-4 border-green-200">
+                        <h3 class="text-3xl font-bold text-green-700 mb-4">Quiz Terminé !</h3>
+                        <p id="final-score-text" class="text-xl text-gray-700 mb-6">Votre score final est de X / Y (Z%).</p>
+                        <p id="feedback-message" class="text-lg font-medium text-gray-800"></p>
                     </div>
                     
                     <!-- Bouton de navigation -->
                     <div class="mt-6 flex justify-end">
-                        <button class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition duration-300 shadow-lg shadow-indigo-300">
-                            Question Suivante
+                        <button id="next-button" onclick="handleNextClick()" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition duration-300 shadow-lg shadow-indigo-300">
+                            Démarrer le Quiz
                         </button>
                     </div>
 
@@ -102,5 +131,379 @@
         </footer>
     </div>
 
+    <script>
+        // Définition des questions du quiz
+        const quizData = [
+            {
+                question: "Quel phénomène physique a initialement amené Fourier à soupçonner le rôle des fonctions trigonométriques dans la décomposition ?",
+                options: [
+                    "La trajectoire des planètes",
+                    "La propagation de la chaleur sur des corps solides", // Correct
+                    "L'analyse des ondes sonores et de la lumière"
+                ],
+                answerIndex: 1,
+                domain: "Physique & Histoire",
+                explanation: "Joseph Fourier a développé ses travaux sur les séries pour résoudre l'équation de la chaleur. Il a découvert que toute fonction, même discontinue, pouvait être décomposée en une somme de fonctions sinus et cosinus pour modéliser la distribution de la chaleur. "
+            },
+            {
+                question: "La Transformation de Fourier (TF) fait passer le signal du domaine temporel au domaine :",
+                options: [
+                    "Spatial",
+                    "Fréquentiel", // Correct
+                    "Amplitude"
+                ],
+                answerIndex: 1,
+                domain: "Concepts Fondamentaux",
+                explanation: "La Transformation de Fourier décompose un signal en ses composantes sinusoïdales à différentes fréquences. Le domaine fréquentiel (ou domaine de Fourier) montre l'amplitude de chaque fréquence présente dans le signal original."
+            },
+            {
+                question: "Les Séries de Fourier sont exclusivement utilisées pour représenter quel type de signaux ?",
+                options: [
+                    "Les signaux apériodiques et transitoires",
+                    "Les signaux aléatoires",
+                    "Les signaux périodiques", // Correct
+                ],
+                answerIndex: 2,
+                domain: "Séries de Fourier",
+                explanation: "Les Séries de Fourier représentent les fonctions périodiques comme une somme infinie d'harmoniques sinusoïdales. Pour les signaux apériodiques, on utilise la Transformée de Fourier continue ou discrète."
+            },
+            {
+                question: "En pratique, quel algorithme permet de calculer efficacement la Transformée de Fourier Discrète (TFD) ?",
+                options: [
+                    "L'algorithme de Dijkstra",
+                    "La Transformée en Ondelettes Discrètes (TOD)",
+                    "La Transformée de Fourier Rapide (FFT)", // Correct
+                ],
+                answerIndex: 2,
+                domain: "Calcul Numérique",
+                explanation: "La FFT (Fast Fourier Transform) est un algorithme qui réduit le temps de calcul de la TFD de $O(N^2)$ à $O(N \log N)$, la rendant utilisable en temps réel dans de nombreuses applications."
+            },
+            {
+                question: "Quelle opération dans le domaine fréquentiel correspond à l'opération de convolution dans le domaine temporel/spatial (Théorème de Convolution) ?",
+                options: [
+                    "La multiplication simple", // Correct
+                    "L'intégration",
+                    "La soustraction"
+                ],
+                answerIndex: 0,
+                domain: "Propriétés",
+                explanation: "Le Théorème de Convolution est fondamental : la convolution de deux signaux dans un domaine équivaut à la multiplication de leurs transformées de Fourier dans l'autre domaine. Ceci simplifie grandement l'analyse et le filtrage des systèmes."
+            },
+            {
+                question: "En imagerie (2D), le centre du spectre de Fourier représente habituellement :",
+                options: [
+                    "Les hautes fréquences (détails fins)",
+                    "Les basses fréquences (information globale et moyenne)", // Correct
+                    "Le bruit aléatoire uniquement"
+                ],
+                answerIndex: 1,
+                domain: "Applications (Imagerie)",
+                explanation: "Le centre du spectre (fréquence nulle) contient l'information de base et la luminosité moyenne de l'image. Les basses fréquences déterminent les contours larges, tandis que les hautes fréquences, plus éloignées du centre, représentent les détails fins et les textures."
+            },
+            {
+                question: "Que représente l'amplitude d'un pic dans le spectre de Fourier ?",
+                options: [
+                    "La phase de l'onde",
+                    "La fréquence d'échantillonnage du signal",
+                    "L'intensité ou l'énergie de cette composante sinusoïdale", // Correct
+                ],
+                answerIndex: 2,
+                domain: "Interprétation du Spectre",
+                explanation: "Dans le spectre, l'axe des ordonnées (amplitude) indique la quantité (ou l'énergie) de cette fréquence particulière présente dans le signal original. Plus le pic est haut, plus cette fréquence est 'importante'."
+            }
+        ];
+
+        // Variables d'état
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isAnswerSelected = false;
+        let selectedOptionIndex = null;
+        const totalQuestions = quizData.length;
+
+        // Références aux éléments du DOM
+        const questionsCompletedSpan = document.getElementById('questions-completed');
+        const scorePercentageSpan = document.getElementById('score-percentage');
+        const currentDomainSpan = document.getElementById('current-domain');
+        const questionTextP = document.getElementById('question-text');
+        const optionsContainerDiv = document.getElementById('options-container');
+        const nextButton = document.getElementById('next-button');
+        const questionArea = document.getElementById('question-area');
+        const resultsArea = document.getElementById('results-area');
+        const sectionTitle = document.getElementById('section-title');
+        const sectionDescription = document.getElementById('section-description');
+        const quizContent = document.getElementById('quiz-content');
+        const feedbackMessageArea = document.getElementById('feedback-message-area'); // Référence au nouvel élément
+
+        /**
+         * Met à jour le panneau des statistiques.
+         */
+        function updateStats() {
+            const currentCount = Math.min(currentQuestionIndex, totalQuestions);
+            
+            questionsCompletedSpan.textContent = `${currentCount}/${totalQuestions}`;
+            
+            let percentage = 0;
+            if (currentCount > 0) {
+                percentage = Math.round((score / currentCount) * 100);
+            }
+            if (currentQuestionIndex === totalQuestions) {
+                // Si le quiz est terminé, calcule le score final
+                percentage = Math.round((score / totalQuestions) * 100);
+            }
+            scorePercentageSpan.textContent = `${percentage}%`;
+
+            if (currentQuestionIndex < totalQuestions) {
+                currentDomainSpan.textContent = quizData[currentQuestionIndex].domain;
+            } else {
+                currentDomainSpan.textContent = "Terminé";
+            }
+            
+            scorePercentageSpan.classList.remove('text-green-600', 'text-red-600', 'text-yellow-600');
+            if (percentage >= 75) {
+                scorePercentageSpan.classList.add('text-green-600');
+            } else if (percentage >= 40) {
+                scorePercentageSpan.classList.add('text-yellow-600');
+            } else {
+                scorePercentageSpan.classList.add('text-red-600');
+            }
+        }
+
+        /**
+         * Charge la question actuelle dans l'interface.
+         */
+        function loadQuestion() {
+            // S'assurer que les zones de questions sont visibles et les résultats cachés
+            questionArea.classList.remove('hidden');
+            resultsArea.classList.add('hidden');
+            
+            // Cacher et vider la zone de feedback
+            feedbackMessageArea.classList.add('hidden');
+            feedbackMessageArea.innerHTML = '';
+
+            const currentQ = quizData[currentQuestionIndex];
+            
+            // Mise à jour du texte
+            sectionTitle.textContent = `Question ${currentQuestionIndex + 1} de ${totalQuestions}`;
+            sectionDescription.textContent = currentQ.domain;
+            questionTextP.textContent = currentQ.question;
+            
+            optionsContainerDiv.innerHTML = ''; // Nettoyer les options précédentes
+            
+            // Créer les boutons d'options
+            currentQ.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button w-full text-left p-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150 shadow-sm font-medium';
+                button.textContent = option;
+                button.dataset.index = index;
+                button.onclick = () => selectOption(index, button);
+                optionsContainerDiv.appendChild(button);
+            });
+
+            // Réinitialiser l'état pour la nouvelle question
+            nextButton.textContent = 'Valider la Réponse';
+            nextButton.disabled = true;
+            nextButton.classList.add('opacity-50');
+            isAnswerSelected = false;
+            selectedOptionIndex = null;
+            updateStats();
+        }
+
+        /**
+         * Gère la sélection d'une option par l'utilisateur.
+         * @param {number} index - Index de l'option sélectionnée.
+         * @param {HTMLButtonElement} button - Le bouton cliqué.
+         */
+        function selectOption(index, button) {
+            if (isAnswerSelected) return; // Empêche de changer la sélection après la validation
+
+            // Désélectionner toutes les options
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.classList.add('border-gray-300', 'bg-white', 'text-gray-700');
+                btn.classList.remove('border-indigo-300', 'bg-indigo-100', 'text-indigo-800', 'shadow-lg');
+            });
+
+            // Sélectionner le bouton cliqué
+            button.classList.add('selected');
+            button.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
+            button.classList.add('border-indigo-300', 'bg-indigo-100', 'text-indigo-800', 'shadow-lg');
+
+            selectedOptionIndex = index;
+            nextButton.disabled = false;
+            nextButton.classList.remove('opacity-50');
+        }
+
+        /**
+         * Vérifie la réponse et met à jour le score et l'interface, incluant l'explication.
+         */
+        function checkAnswer() {
+            if (isAnswerSelected || selectedOptionIndex === null) return;
+            isAnswerSelected = true;
+
+            const currentQ = quizData[currentQuestionIndex];
+            const isCorrect = selectedOptionIndex === currentQ.answerIndex;
+            const correctAnswerText = currentQ.options[currentQ.answerIndex];
+            
+            if (isCorrect) {
+                score++;
+            }
+
+            // --- Logique d'Affichage du Feedback et de l'Explication ---
+            feedbackMessageArea.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            
+            let feedbackHtml = '';
+
+            if (isCorrect) {
+                feedbackMessageArea.classList.remove('bg-red-100', 'text-red-800', 'border-red-300');
+                feedbackMessageArea.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+                feedbackHtml = `Correct ! 🎉 C'est la bonne réponse.`;
+            } else {
+                feedbackMessageArea.classList.remove('bg-green-100', 'text-green-800', 'border-green-300');
+                feedbackMessageArea.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
+                feedbackHtml = `Incorrect. ❌ La bonne réponse était : <span class="font-bold text-gray-900">"${correctAnswerText}"</span>.`;
+            }
+
+            // Ajout de l'explication
+            feedbackHtml += `<p class="mt-2 pt-2 border-t border-current text-sm font-normal text-gray-700">
+                                <span class="font-bold block mb-1">Explication:</span>
+                                ${currentQ.explanation}
+                             </p>`;
+
+            feedbackMessageArea.innerHTML = feedbackHtml;
+            // --- Fin Logique d'Affichage du Feedback ---
+
+            // Afficher le résultat sur les boutons (couleurs)
+            document.querySelectorAll('.option-button').forEach((btn, index) => {
+                const isUserChoice = index === selectedOptionIndex;
+                const isTheCorrectAnswer = index === currentQ.answerIndex;
+
+                btn.disabled = true; // Désactiver tous les boutons
+
+                if (isTheCorrectAnswer) {
+                    btn.classList.remove('selected', 'border-gray-300', 'bg-white', 'text-gray-700', 'shadow-lg', 'incorrect');
+                    btn.classList.add('correct', 'shadow-md');
+                } else if (isUserChoice) {
+                    btn.classList.remove('selected', 'border-indigo-300', 'bg-indigo-100', 'text-indigo-800', 'shadow-lg');
+                    btn.classList.add('incorrect', 'shadow-md');
+                }
+            });
+
+            // Mettre à jour le bouton de navigation
+            nextButton.textContent = 'Question Suivante';
+            nextButton.classList.remove('opacity-50'); // Le bouton est à nouveau utilisable
+            updateStats();
+        }
+
+        /**
+         * Affiche les résultats finaux.
+         */
+        function showResults() {
+            questionArea.classList.add('hidden');
+            resultsArea.classList.remove('hidden');
+            // Cache le bouton "next-button" car le bouton de redémarrage est créé dans results-area
+            nextButton.classList.add('hidden'); 
+
+            const finalScoreText = document.getElementById('final-score-text');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const finalPercentage = Math.round((score / totalQuestions) * 100);
+            
+            finalScoreText.innerHTML = `Votre score final est de <span class="text-indigo-700 font-extrabold">${score} / ${totalQuestions}</span>, soit <span class="text-green-600 font-extrabold">${finalPercentage}%</span>.`;
+
+            // Message de feedback
+            let feedback = '';
+            let borderColor = 'border-green-400';
+            if (finalPercentage >= 85) {
+                feedback = "Félicitations ! Votre maîtrise de l'analyse de Fourier est excellente. Le domaine fréquentiel n'a plus de secrets pour vous.";
+                borderColor = 'border-green-400';
+            } else if (finalPercentage >= 60) {
+                feedback = "Bon travail ! Vous avez une solide compréhension des concepts. Révisez les propriétés et applications pour atteindre la perfection.";
+                borderColor = 'border-yellow-400';
+            } else {
+                feedback = "Continuez à pratiquer ! Vous avez identifié les bases, mais une relecture des séries et de la TF serait bénéfique pour transformer vos signaux en succès.";
+                borderColor = 'border-red-400';
+            }
+
+            resultsArea.className = `hidden text-center p-8 bg-white rounded-xl border-4 ${borderColor}`;
+            resultsArea.classList.remove('hidden');
+            feedbackMessage.textContent = feedback;
+            
+            // Retirer tout bouton de redémarrage existant avant d'en ajouter un nouveau (correctif)
+            const existingRestartButton = resultsArea.querySelector('#restart-btn');
+            if (existingRestartButton) {
+                existingRestartButton.remove();
+            }
+
+            // Ajouter un bouton pour recommencer
+            const restartButton = document.createElement('button');
+            restartButton.id = 'restart-btn'; // Ajout d'un ID pour le repérer
+            restartButton.className = 'mt-6 px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition duration-300 shadow-lg shadow-indigo-300';
+            restartButton.textContent = 'Recommencer le Quiz';
+            restartButton.onclick = restartQuiz;
+            resultsArea.appendChild(restartButton);
+
+            updateStats(); // Mise à jour finale des statistiques
+        }
+        
+        /**
+         * Redémarre le quiz.
+         */
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            isAnswerSelected = false;
+            selectedOptionIndex = null;
+            
+            // Afficher le bouton principal et le remettre dans son état initial
+            nextButton.classList.remove('hidden'); 
+            nextButton.textContent = 'Démarrer le Quiz'; 
+            
+            // Réinitialiser les zones d'introduction/résultats
+            sectionTitle.textContent = "Bienvenue dans le Quiz de Fourier";
+            sectionDescription.textContent = "Ce quiz couvre les concepts fondamentaux de la Transformation et des Séries de Fourier, de leurs origines physiques à leurs applications modernes. Cliquez sur 'Démarrer le Quiz' pour commencer.";
+            questionArea.classList.add('hidden');
+            resultsArea.classList.add('hidden');
+            
+            // Retirer le bouton de redémarrage créé dans la zone de résultats
+            const existingRestartButton = resultsArea.querySelector('#restart-btn');
+            if (existingRestartButton) {
+                existingRestartButton.remove();
+            }
+            
+            updateStats();
+        }
+
+        /**
+         * Gère le clic sur le bouton "Suivant/Valider".
+         */
+        function handleNextClick() {
+            // Utilisation de .trim() pour une comparaison de texte plus sûre
+            const nextButtonText = nextButton.textContent.trim();
+            
+            // 1. Si le quiz n'a pas encore commencé (bouton "Démarrer le Quiz")
+            if (currentQuestionIndex === 0 && nextButtonText === 'Démarrer le Quiz') {
+                loadQuestion();
+                return;
+            }
+
+            // 2. Si une réponse a été validée (bouton "Question Suivante")
+            if (isAnswerSelected && nextButtonText === 'Question Suivante') {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < totalQuestions) {
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            } 
+            // 3. Si une option est sélectionnée mais non validée (bouton "Valider la Réponse")
+            else if (selectedOptionIndex !== null && nextButtonText === 'Valider la Réponse') {
+                checkAnswer();
+            }
+        }
+
+        // Initialisation à la charge de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStats(); // Initialise l'affichage des stats à 0/7
+        });
+    </script>
 </body>
 </html>
