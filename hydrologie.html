@@ -35,18 +35,6 @@
             transition: width 0.4s ease-out;
         }
     </style>
-    <!-- Chosen Palette: GitHub Slate & Sky Blue -->
-    <!-- Application Structure Plan: 
-         - Branding GitHub : Ajout d'une étiquette visuelle "Hosted on GitHub".
-         - Interface de Quiz : Système de navigation par question unique.
-         - Feedback dynamique : Explications immédiates après chaque clic.
-    -->
-    <!-- Visualization & Content Choices:
-         - Intégration de l'icône GitHub pour le contexte de déploiement.
-         - Quiz technique basé sur les 10 questions sources.
-         - Rationale pédagogique affiché pour chaque réponse.
-         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
-    -->
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
@@ -82,7 +70,7 @@
                 <div class="p-8 md:p-12">
                     <!-- Question Header -->
                     <div id="quiz-header" class="mb-8">
-                        <span id="question-number" class="text-xs font-bold uppercase tracking-widest text-sky-500 mb-2 block">Question 1 sur 10</span>
+                        <span id="question-number" class="text-xs font-bold uppercase tracking-widest text-sky-500 mb-2 block">Chargement...</span>
                         <h2 id="question-text" class="text-2xl md:text-3xl font-bold text-slate-800 leading-tight">Chargement du quiz...</h2>
                     </div>
 
@@ -119,7 +107,7 @@
                 <p class="text-slate-500 mb-8">Résultats de l'évaluation</p>
                 
                 <div class="inline-block p-8 bg-slate-50 rounded-3xl mb-8">
-                    <div class="text-5xl font-black text-sky-600 mb-2" id="final-score">0 / 10</div>
+                    <div class="text-5xl font-black text-sky-600 mb-2" id="final-score">0 / 15</div>
                     <div id="feedback-message" class="text-sm font-medium text-slate-600 uppercase tracking-wide"></div>
                 </div>
 
@@ -245,6 +233,57 @@
                     { t: "La pluie s'infiltre", r: "Non.", c: false }
                 ],
                 hint: "Temps pour que tout le bassin contribue au débit."
+            },
+            // NOUVELLES QUESTIONS BASSIN VERSANT
+            {
+                text: "Quel indice permet de quantifier la forme plus ou moins allongée d'un bassin versant ?",
+                options: [
+                    { t: "L'indice de Gravelius (Kc)", r: "Exact. Plus Kc est proche de 1, plus le bassin est circulaire.", c: true },
+                    { t: "Le coefficient de ruissellement", r: "Non, il concerne le rapport pluie/débit.", c: false },
+                    { t: "La densité de drainage", r: "Non, elle concerne la longueur du réseau hydrographique.", c: false },
+                    { t: "L'indice de Strahler", r: "Non, il définit l'ordre des cours d'eau.", c: false }
+                ],
+                hint: "On l'appelle aussi coefficient de compacité."
+            },
+            {
+                text: "Comment appelle-t-il la ligne de fond d'une vallée où se concentrent les eaux d'écoulement ?",
+                options: [
+                    { t: "Le talweg", r: "Correct. C'est la ligne rejoignant les points les plus bas d'une vallée.", c: true },
+                    { t: "L'interfluve", r: "Non, c'est la zone entre deux vallées.", c: false },
+                    { t: "Le versant", r: "Non, c'est la surface inclinée de la vallée.", c: false },
+                    { t: "La crête", r: "Non, c'est le point haut.", c: false }
+                ],
+                hint: "Terme d'origine allemande (Tal : vallée, Weg : chemin)."
+            },
+            {
+                text: "Qu'indique une densité de drainage élevée pour un bassin versant ?",
+                options: [
+                    { t: "Un réseau hydrographique très développé", r: "Oui. Cela suggère souvent un sol peu perméable et un ruissellement rapide.", c: true },
+                    { t: "Un bassin très boisé", r: "Non, la forêt a tendance à limiter le drainage de surface.", c: false },
+                    { t: "Une faible pente moyenne", r: "Non, au contraire.", c: false },
+                    { t: "Une grande capacité d'infiltration", r: "Non, c'est plutôt l'inverse.", c: false }
+                ],
+                hint: "C'est le rapport de la longueur totale des cours d'eau sur la surface du bassin."
+            },
+            {
+                text: "Dans le classement de Strahler, si deux cours d'eau d'ordre 2 se rejoignent, le nouveau tronçon est d'ordre :",
+                options: [
+                    { t: "3", r: "Correct. L'ordre augmente seulement quand deux tronçons de même ordre se rencontrent.", c: true },
+                    { t: "2", r: "Non, l'ordre doit s'incrémenter.", c: false },
+                    { t: "4", r: "Non, l'augmentation est de +1.", c: false },
+                    { t: "1", r: "Non.", c: false }
+                ],
+                hint: "La règle est n + 1."
+            },
+            {
+                text: "Quelle courbe représente la répartition de la surface du bassin versant en fonction de l'altitude ?",
+                options: [
+                    { t: "La courbe hypsométrique", r: "Exact. Elle permet de caractériser le stade d'érosion et le relief du bassin.", c: true },
+                    { t: "La courbe de tarage", r: "Non, c'est pour le débit.", c: false },
+                    { t: "L'hydrogramme", r: "Non, c'est l'évolution du débit dans le temps.", c: false },
+                    { t: "Le hyétogramme", r: "Non, c'est la répartition de la pluie.", c: false }
+                ],
+                hint: "Utilise l'altitude (hypso) et la mesure (métrie)."
             }
         ];
 
@@ -361,9 +400,9 @@
             progressBar.style.width = '100%';
             document.getElementById('final-score').textContent = `${score} / ${quizData.length}`;
             const msg = document.getElementById('feedback-message');
-            if (score === 10) msg.textContent = "Parfait ! Maîtrise totale.";
-            else if (score >= 7) msg.textContent = "Excellent travail !";
-            else msg.textContent = "Révisions conseillées.";
+            if (score === quizData.length) msg.textContent = "Parfait ! Maîtrise totale du bassin versant.";
+            else if (score >= (quizData.length * 0.7)) msg.textContent = "Excellent travail !";
+            else msg.textContent = "Quelques révisions sur le bassin versant seraient utiles.";
         }
 
         function restartQuiz() {
