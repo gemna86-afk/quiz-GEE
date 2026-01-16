@@ -234,7 +234,6 @@
                 ],
                 hint: "Temps pour que tout le bassin contribue au débit."
             },
-            // NOUVELLES QUESTIONS BASSIN VERSANT
             {
                 text: "Quel indice permet de quantifier la forme plus ou moins allongée d'un bassin versant ?",
                 options: [
@@ -246,7 +245,7 @@
                 hint: "On l'appelle aussi coefficient de compacité."
             },
             {
-                text: "Comment appelle-t-il la ligne de fond d'une vallée où se concentrent les eaux d'écoulement ?",
+                text: "Comment appelle-til la ligne de fond d'une vallée où se concentrent les eaux d'écoulement ?",
                 options: [
                     { t: "Le talweg", r: "Correct. C'est la ligne rejoignant les points les plus bas d'une vallée.", c: true },
                     { t: "L'interfluve", r: "Non, c'est la zone entre deux vallées.", c: false },
@@ -290,6 +289,7 @@
         let currentQ = 0;
         let score = 0;
         let answered = false;
+        let shuffledOptions = []; // Stocke les options mélangées pour la question actuelle
 
         const qText = document.getElementById('question-text');
         const qNum = document.getElementById('question-number');
@@ -302,6 +302,16 @@
         const scoreDisplay = document.getElementById('score-display');
         const quizCard = document.getElementById('quiz-card');
         const resultScreen = document.getElementById('result-screen');
+
+        // Fonction pour mélanger un tableau (Algorithme Fisher-Yates)
+        function shuffleArray(array) {
+            const newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
 
         function initQuiz() {
             currentQ = 0;
@@ -316,6 +326,9 @@
             const data = quizData[currentQ];
             answered = false;
             
+            // Mélange les options à chaque fois qu'une question est chargée
+            shuffledOptions = shuffleArray(data.options);
+            
             progressBar.style.width = `${(currentQ / quizData.length) * 100}%`;
             qNum.textContent = `Question ${currentQ + 1} sur ${quizData.length}`;
             qText.textContent = data.text;
@@ -326,7 +339,7 @@
             rationale.classList.add('hidden');
             hintBtn.classList.remove('hidden');
 
-            data.options.forEach((opt, i) => {
+            shuffledOptions.forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = "quiz-option w-full text-left p-5 rounded-2xl border border-slate-200 text-slate-700 font-medium flex justify-between items-center group bg-white";
                 btn.innerHTML = `<span>${opt.t}</span><i class="fas fa-chevron-right text-slate-300 group-hover:text-sky-400"></i>`;
@@ -339,8 +352,8 @@
             if (answered) return;
             answered = true;
             
-            const data = quizData[currentQ];
-            const isCorrect = data.options[index].c;
+            const selectedOpt = shuffledOptions[index];
+            const isCorrect = selectedOpt.c;
             const buttons = optCont.querySelectorAll('button');
 
             if (isCorrect) score++;
@@ -348,7 +361,8 @@
 
             buttons.forEach((btn, i) => {
                 btn.disabled = true;
-                if (data.options[i].c) {
+                const opt = shuffledOptions[i];
+                if (opt.c) {
                     btn.className = "quiz-option w-full text-left p-5 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 font-bold flex justify-between items-center";
                     btn.innerHTML += `<i class="fas fa-check-circle"></i>`;
                 } else if (i === index) {
@@ -362,10 +376,10 @@
             rationale.classList.remove('hidden');
             if (isCorrect) {
                 rationale.className = "mt-6 p-5 rounded-2xl text-sm border-l-4 border-emerald-50 bg-emerald-50/50 text-emerald-800";
-                rationale.innerHTML = `<h4 class="font-bold mb-1">Bravo !</h4> ${data.options[index].r}`;
+                rationale.innerHTML = `<h4 class="font-bold mb-1">Bravo !</h4> ${selectedOpt.r}`;
             } else {
                 rationale.className = "mt-6 p-5 rounded-2xl text-sm border-l-4 border-rose-50 bg-rose-50/50 text-rose-800";
-                rationale.innerHTML = `<h4 class="font-bold mb-1">Oups...</h4> ${data.options[index].r}`;
+                rationale.innerHTML = `<h4 class="font-bold mb-1">Oups...</h4> ${selectedOpt.r}`;
             }
 
             hintBtn.classList.add('hidden');
